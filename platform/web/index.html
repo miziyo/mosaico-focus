@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Focus Cube Simulator</title>
+  <link rel="stylesheet" href="sim.css">
+</head>
+<body>
+  <main class="layout">
+    <section class="stage">
+      <div class="device" id="device">
+        <div class="face front">
+          <canvas id="screen" width="480" height="480" aria-label="ESP-Mosaico 480x480 display"></canvas>
+          <div class="sleep-veil" id="veil"></div>
+        </div>
+        <div class="face back">
+          <span class="brand">ESP-Mosaico</span>
+          <span class="back-note">face down · screen off</span>
+        </div>
+        <div class="led-module" id="led" title="RGB LED module"></div>
+      </div>
+      <p class="caption" id="caption">화면이 위를 보고 있어요</p>
+    </section>
+
+    <aside class="panel">
+      <header>
+        <h1>Focus Cube</h1>
+        <p class="sub">ESP-Mosaico 시뮬레이터 · LVGL 9 + WebAssembly</p>
+      </header>
+
+      <div class="group">
+        <h2>기기 자세 <kbd>Space</kbd></h2>
+        <div class="seg" id="pose">
+          <button data-pose="up" class="on">위로 놓기</button>
+          <button data-pose="down">엎어놓기</button>
+          <button data-pose="tilt">손에 들기</button>
+        </div>
+        <label class="check"><input type="checkbox" id="motion"> 폰 기울기 센서 사용 (실험적)</label>
+      </div>
+
+      <div class="group">
+        <h2>시간 배속</h2>
+        <div class="seg" id="speed">
+          <button data-k="1" class="on">1×</button>
+          <button data-k="10">10×</button>
+          <button data-k="60">60×</button>
+          <button data-k="300">300×</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>상태</h2>
+        <dl class="readout">
+          <dt>디스플레이</dt><dd id="r-display">켜짐</dd>
+          <dt>LED 모듈</dt><dd id="r-led">꺼짐</dd>
+          <dt>소리</dt><dd><label class="check inline"><input type="checkbox" id="sound" checked> 켜기</label></dd>
+        </dl>
+      </div>
+
+      <div class="group grow">
+        <div class="row">
+          <h2>세션 기록</h2>
+          <span class="actions">
+            <button class="link" id="export">CSV</button>
+            <button class="link" id="clear">지우기</button>
+          </span>
+        </div>
+        <ol class="log" id="log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <script src="focuscube.js"></script>
+  <script src="sim.js"></script>
+</body>
+</html>
