@@ -1,5 +1,7 @@
 # Focus Cube for ESP-Mosaico
 
+**시뮬레이터 바로 열기:** [Focus Cube](https://miziyo.github.io/mosaico-focus/) · [Sensor Lab](https://miziyo.github.io/mosaico-focus/lab.html)
+
 **엎으면 집중이 시작되는 타이머.** [ESP-Mosaico](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s31/esp-mosaico/user_guide.html)(ESP32-S31, 480×480 터치, IMU, 자석 확장 모듈)용 앱이에요. 실물 보드 없이 브라우저 시뮬레이터에서 먼저 개발하고, 나중에 HAL만 갈아 끼워 실기기로 옮기는 구조로 만들었어요.
 
 | 동작 | 결과 |
