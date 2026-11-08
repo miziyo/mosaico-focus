@@ -3,7 +3,7 @@
 #   make test   - host unit tests for the core logic (gcc only)
 #   make web    - browser simulator into build/web (needs emcc on PATH)
 #   make serve  - serve build/web on http://localhost:8000
-#   make deps   - fetch LVGL into third_party/
+#   make deps   - fetch LVGL into third_party/ (run on its own, before 'make web')
 
 LVGL_VERSION := v9.2.2
 LVGL_DIR     := third_party/lvgl
@@ -51,6 +51,7 @@ WEB_STATIC := index.html lab.html common.js sim.js lab.js sim.css
 web: $(WEB_OUT)/focuscube.js $(addprefix $(WEB_OUT)/,$(WEB_STATIC))
 
 $(WEB_OUT)/focuscube.js: $(LVGL_OBJS) $(APP_OBJS)
+	@test -n "$(LVGL_SRCS)" || { echo "LVGL not found in $(LVGL_DIR): run 'make deps' first, as a separate command"; exit 1; }
 	@mkdir -p $(dir $@)
 	$(EMCC) $^ -O2 -o $@ \
 	    -sEXPORTED_FUNCTIONS=$(EXPORTS) \

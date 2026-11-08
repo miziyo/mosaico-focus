@@ -23,7 +23,8 @@ jobs:
       - name: Build web simulator
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
-          make deps web
+          make deps   # must be its own make run: the LVGL file list is read at startup
+          make web
       - name: End-to-end tests
         run: |
           npm install --no-save playwright@1.49.1
