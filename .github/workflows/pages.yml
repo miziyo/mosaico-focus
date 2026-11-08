@@ -20,12 +20,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: 4.0.10
+      - uses: actions/checkout@v5
       - run: make test
-      - run: make deps web
+      - name: Install Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 4.0.10
+          "$RUNNER_TEMP/emsdk/emsdk" activate 4.0.10
+      - name: Build web simulator
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          make deps web
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
