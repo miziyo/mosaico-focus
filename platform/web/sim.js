@@ -70,16 +70,23 @@
       ol.appendChild(li);
     }
   }
-  $("export").onclick = () => {
+  // Copy instead of download: works everywhere, including sandboxed embeds.
+  $("export").onclick = async () => {
     const rows = [["finished_at", "target_min", "focused_min", "pauses", "completed"]];
     for (const r of store.get(LOG_KEY, [])) {
       rows.push([new Date(r.at).toISOString(), (r.target / 60000).toFixed(1),
         (r.focused / 60000).toFixed(1), r.pauses, r.completed]);
     }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" }));
-    a.download = "focus-sessions.csv";
-    a.click();
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const btn = $("export");
+    try {
+      await navigator.clipboard.writeText(csv);
+      btn.textContent = "복사됨";
+    } catch {
+      console.log(csv);
+      btn.textContent = "복사 실패";
+    }
+    setTimeout(() => (btn.textContent = "CSV 복사"), 1500);
   };
   $("clear").onclick = () => {
     store.set(LOG_KEY, []);
