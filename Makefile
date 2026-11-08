@@ -11,16 +11,20 @@ LVGL_DIR     := third_party/lvgl
 CFLAGS_COMMON := -std=c99 -Wall -Wextra
 
 # ---------------------------------------------------------------- host tests
-TEST_BIN := build/host/test_focus_core
+HOST_CC := gcc $(CFLAGS_COMMON) -Werror -g -fsanitize=address,undefined -Icore
 
 .PHONY: test
-test: $(TEST_BIN)
-	./$(TEST_BIN)
+test: build/host/test_focus_core build/host/test_sensors
+	./build/host/test_focus_core
+	./build/host/test_sensors
 
-$(TEST_BIN): core/focus_core.c core/focus_core.h tests/test_focus_core.c
+build/host/test_focus_core: core/focus_core.c core/focus_core.h tests/test_focus_core.c
 	@mkdir -p $(dir $@)
-	gcc $(CFLAGS_COMMON) -Werror -g -fsanitize=address,undefined -Icore \
-	    core/focus_core.c tests/test_focus_core.c -o $@
+	$(HOST_CC) core/focus_core.c tests/test_focus_core.c -o $@
+
+build/host/test_sensors: core/sensors.c core/sensors.h tests/test_sensors.c
+	@mkdir -p $(dir $@)
+	$(HOST_CC) core/sensors.c tests/test_sensors.c -lm -o $@
 
 # ---------------------------------------------------------------- web build
 EMCC      ?= emcc
@@ -30,15 +34,21 @@ WEB_INC   := -Icore -Iapp -Iplatform/web -I$(LVGL_DIR) -DLV_CONF_INCLUDE_SIMPLE
 WEB_CFLAGS := -O2 $(WEB_INC)
 
 LVGL_SRCS := $(shell find $(LVGL_DIR)/src -name '*.c' 2>/dev/null)
-APP_SRCS  := core/focus_core.c app/focus_app.c app/focus_ui.c platform/web/main.c
+APP_SRCS  := core/focus_core.c core/sensors.c app/focus_app.c app/focus_ui.c app/lab_app.c \
+             platform/web/main.c
 
 LVGL_OBJS := $(patsubst %.c,$(WEB_OBJ)/%.o,$(LVGL_SRCS))
 APP_OBJS  := $(patsubst %.c,$(WEB_OBJ)/%.o,$(APP_SRCS))
 
-EXPORTS := _web_init,_web_frame,_web_framebuffer,_web_set_accel,_web_pointer,_web_set_time_scale,_malloc
+EXPORT_LIST := _web_init _web_frame _web_framebuffer _web_set_accel _web_pointer _web_set_time_scale \
+               _web_set_orientation _web_set_spin _web_shake _web_set_magnet _web_set_noise _web_clap \
+               _web_set_battery _web_set_fn _web_get_heading _web_readout _malloc
+comma := ,
+EXPORTS := $(subst $(eval) ,$(comma),$(strip $(EXPORT_LIST)))
 
 .PHONY: web
-web: $(WEB_OUT)/focuscube.js $(WEB_OUT)/index.html $(WEB_OUT)/sim.js $(WEB_OUT)/sim.css
+WEB_STATIC := index.html lab.html common.js sim.js lab.js sim.css
+web: $(WEB_OUT)/focuscube.js $(addprefix $(WEB_OUT)/,$(WEB_STATIC))
 
 $(WEB_OUT)/focuscube.js: $(LVGL_OBJS) $(APP_OBJS)
 	@mkdir -p $(dir $@)

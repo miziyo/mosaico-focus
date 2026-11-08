@@ -163,3 +163,42 @@ kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line); border-
 .log .partial { color: #d99a1e; }
 .log .empty { color: var(--muted); justify-content: center; }
 .log time { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- shared: page switcher, vibration ---------- */
+.apps { display: flex; gap: 4px; background: var(--chip); border-radius: 10px; padding: 3px; }
+.apps a {
+  flex: 1; text-align: center; text-decoration: none; color: var(--muted);
+  padding: 6px 8px; border-radius: 8px; font-size: 13px; font-weight: 600;
+}
+.apps a[aria-current="page"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.apps a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.device.vibe .face { animation: buzz 70ms linear infinite; }
+@keyframes buzz {
+  0% { translate: 0 0; } 25% { translate: 2px -1px; } 50% { translate: -2px 1px; } 75% { translate: 1px 2px; } 100% { translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) { .device.vibe .face { animation: none; outline: 3px solid var(--accent); } }
+
+/* ---------- Sensor Lab panel ---------- */
+.sensor { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sensor:first-of-type { border-top: 0; padding-top: 0; }
+.sensor h2 { margin: 0; }
+.chip-name { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; font-weight: 400; }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.slider { display: grid; grid-template-columns: 6.5em 1fr 4.2em; align-items: center; gap: 10px; font-size: 13px; }
+.slider input { width: 100%; accent-color: var(--accent); min-width: 0; }
+.slider output { text-align: right; font-variant-numeric: tabular-nums; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.hold:active, .btn.hold.down { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.raw { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.raw th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 8px 4px 0; white-space: nowrap; }
+.raw td { text-align: right; padding: 4px 0 4px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+.raw tr + tr th, .raw tr + tr td { border-top: 1px solid var(--line); }
+.raw-wrap { overflow-x: auto; }

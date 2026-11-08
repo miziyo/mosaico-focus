@@ -9,9 +9,6 @@
   const LOG_KEY = "focuscube.log";
 
   const $ = (id) => document.getElementById(id);
-  const canvas = $("screen");
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(480, 480);
   const device = $("device");
 
   let mod = null;
@@ -24,28 +21,7 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
 
-  // ---------- audio ----------
-  let actx = null;
-  function tone(freq, start, dur, gain = 0.18) {
-    if (!$("sound").checked) return;
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = actx.currentTime + start;
-    const o = actx.createOscillator();
-    const g = actx.createGain();
-    o.type = "sine";
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(0, t0);
-    g.gain.linearRampToValueAtTime(gain, t0 + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(actx.destination);
-    o.start(t0);
-    o.stop(t0 + dur + 0.05);
-  }
-  const SOUNDS = [
-    () => tone(880, 0, 0.08, 0.12),                                       // START
-    () => { tone(784, 0, 0.5); tone(988, 0.18, 0.5); tone(1319, 0.36, 0.9); }, // DONE
-    () => { tone(660, 0, 0.18); tone(660, 0.25, 0.18); },                 // BREAK_OVER
-  ];
+  SimCommon.setSoundEnabled(() => $("sound").checked);
 
   // ---------- session log ----------
   function fmtMin(ms) { return Math.round(ms / 60000) + "분"; }
@@ -96,7 +72,8 @@
 
   // ---------- HAL callbacks from C ----------
   const sim = {
-    sound: (id) => SOUNDS[id] && SOUNDS[id](),
+    sound: SimCommon.sound,
+    vibrate: (ms) => SimCommon.vibrate(device, ms),
     led: (id) => {
       $("led").dataset.c = id;
       $("r-led").textContent = LED_NAMES[id] || id;
@@ -165,41 +142,15 @@
     }
   };
 
-  // ---------- touch -> LVGL pointer ----------
-  function pointer(e, down) {
-    if (!mod) return;
-    const r = canvas.getBoundingClientRect();
-    const x = Math.round(((e.clientX - r.left) / r.width) * 480);
-    const y = Math.round(((e.clientY - r.top) / r.height) * 480);
-    mod._web_pointer(x, y, down ? 1 : 0);
-  }
-  canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); pointer(e, true); });
-  canvas.addEventListener("pointermove", (e) => pointer(e, e.buttons > 0));
-  canvas.addEventListener("pointerup", (e) => pointer(e, false));
-  canvas.addEventListener("pointercancel", (e) => pointer(e, false));
-
   // ---------- boot ----------
-  createFocusCube({ sim }).then((m) => {
-    mod = m;
-    renderLog();
-    m._web_init();
-    setPose("up");
-    const fbPtr = m._web_framebuffer();
-    const px = img.data;
-    function frame(t) {
-      if (m._web_frame(t)) {
-        // LVGL XRGB8888 is B,G,R,X in memory; canvas wants R,G,B,A.
-        const src = m.HEAPU8.subarray(fbPtr, fbPtr + 480 * 480 * 4);
-        for (let i = 0; i < src.length; i += 4) {
-          px[i] = src[i + 2];
-          px[i + 1] = src[i + 1];
-          px[i + 2] = src[i];
-          px[i + 3] = 255;
-        }
-        ctx.putImageData(img, 0, 0);
-      }
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+  SimCommon.boot({
+    canvas: $("screen"),
+    app: 0,
+    sim,
+    onReady: (m) => {
+      mod = m;
+      renderLog();
+      setPose("up");
+    },
   });
 })();

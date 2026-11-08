@@ -10,16 +10,45 @@
 | 목표 시간 도달 | 차임이 울리고 LED가 초록으로 바뀜. 들어 올리면 휴식 타이머 시작 |
 | 세션 종료 | 완료/중단 기록과 오늘 통계를 저장 (CSV로 내보내기 가능) |
 
+## Sensor Lab
+
+보드에 내장된 센서마다 기능을 하나씩 붙여서, 시뮬레이터에서 직접 조작해 볼 수 있는 앱이에요(`lab.html`).
+
+| 탭 | 센서 | 기능 |
+|---|---|---|
+| Level | BMI270 가속도 | pitch/roll, 수평계, 엎음/세움/손에 듦 판정 |
+| Compass | BMM150 ×2 | 기울임 보정 나침반, 두 센서 값 차이로 자석·금속 간섭 감지 |
+| Gyro | BMI270 자이로 | 축별 회전 속도, 회전 바퀴 수 적분, 흔들기 감지(진동으로 응답) |
+| Sound | 마이크 + ES8311 | dBFS 레벨, 최고값 유지, 배경 대비 급상승으로 박수 감지 |
+| Power | BQ27220 | 잔량, 전압, 전류, 현재 소비 기준 남은 시간 |
+| I/O | CST9220, 진동 모터, 스피커, FN | 터치 좌표, 스와이프 방향, 출력 테스트. FN 버튼은 다음 탭 |
+
+계산 로직은 모두 `core/sensors.c`에 있고 PC에서 단위 테스트해요. 시뮬레이터의 가상 센서에는 데이터시트 기준 노이즈와 오프셋을 넣었어요(`platform/web/main.c` 상단).
+
+### 센서 민감도 (데이터시트 기준)
+
+| 센서 | 측정 범위 | 분해능 | 노이즈 | 오프셋 |
+|---|---|---|---|---|
+| BMI270 가속도 | ±2/4/8/16 g | 16비트 (±2 g에서 0.06 mg) | 0.16 mg/√Hz | ±20 mg (기울기 약 1°) |
+| BMI270 자이로 | ±125~±2000 °/s | 16비트 | 약 0.007 °/s/√Hz | ±0.5 °/s |
+| BMM150 | ±1300 µT (XY), ±2500 µT (Z) | 0.3 µT | 0.3~0.6 µT (설정에 따라) | 보정 필요 (하드/소프트 아이언) |
+| 마이크 LMA2718B331 | - | - | SNR 62 dB (부품 판매처 정보, 미확인) | - |
+| ES8311 ADC | - | 24비트 | SNR 100 dB | - |
+
 ## 구조
 
 ```
 core/        focus_core.c   자세 판정 + 상태 머신. 순수 C99, 의존성 없음
+             sensors.c      기울기, 나침반, 흔들기·박수 감지, 배터리 계산
 app/         hal.h          하드웨어 추상화 계층 (IMU, 소리, LED, 백라이트, 저장소)
              focus_app.c    core ↔ UI ↔ HAL 연결
              focus_ui.c     LVGL 9 화면 (480×480)
+             lab_app.c      Sensor Lab 화면
 platform/web/               브라우저 시뮬레이터: Emscripten + JS로 HAL 구현
 tests/       test_focus_core.c   코어 단위 테스트 (gcc + ASan/UBSan)
-             web_smoke.js        시뮬레이터 E2E 테스트 (Playwright)
+             test_sensors.c      센서 알고리즘 단위 테스트
+             web_smoke.js        Focus Cube E2E 테스트 (Playwright)
+             lab_smoke.js        Sensor Lab E2E 테스트
 ```
 
 설계에서 지킨 원칙:
@@ -52,7 +81,11 @@ make serve    # http://localhost:8000
 
 | HAL 함수 | ESP-Mosaico 대응 |
 |---|---|
-| `hal_imu_read` | BMI270 가속도 (BSP 센서 API), ±2g 범위, 20Hz면 충분 |
+| `hal_imu_read` / `hal_gyro_read` | BMI270 (I2C 0x69), ±2g / ±500°/s 범위, 20Hz면 충분 |
+| `hal_mag_read` | BMM150 ×2 (I2C 0x11, 0x12), 첫 실행 시 8자 그리기 보정 |
+| `hal_mic_rms` | ES8311 녹음 스트림에서 50ms 블록 RMS |
+| `hal_battery_read` | BQ27220 (I2C 0x55) SOC, 전압, 평균 전류 |
+| `hal_vibrate` / `hal_fn_button` | GPIO8 출력 / GPIO7 입력 (active-low) |
 | `hal_time_ms` | `esp_timer_get_time() / 1000` |
 | `hal_day_index` | SNTP 동기화 후 `localtime()` |
 | `hal_sound` | ES8311 코덱 + NS4150B 앰프로 짧은 PCM 톤 재생 |

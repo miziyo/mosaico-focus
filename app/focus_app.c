@@ -37,7 +37,11 @@ static void reset_stats_if_new_day(void)
 static void handle_events(uint32_t ev)
 {
     if (ev & FC_EV_STARTED) hal_sound(HAL_SOUND_START);
-    if (ev & FC_EV_TARGET_REACHED) hal_sound(HAL_SOUND_DONE);
+    if (ev & FC_EV_TARGET_REACHED) {
+        /* face down: the buzz is felt through the desk, even with sound off */
+        hal_sound(HAL_SOUND_DONE);
+        hal_vibrate(600);
+    }
     if (ev & FC_EV_BREAK_OVER) hal_sound(HAL_SOUND_BREAK_OVER);
     if (ev & FC_EV_RECORD) {
         const fc_record_t *r = &s_fc.last_record;

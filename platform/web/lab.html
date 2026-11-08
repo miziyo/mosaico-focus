@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sensor Lab Simulator</title>
+  <link rel="stylesheet" href="sim.css">
+</head>
+<body>
+  <main class="layout">
+    <section class="stage">
+      <div class="device" id="device">
+        <div class="face front">
+          <canvas id="screen" width="480" height="480" aria-label="ESP-Mosaico 480x480 display"></canvas>
+        </div>
+        <div class="face back">
+          <span class="brand">ESP-Mosaico</span>
+          <span class="back-note">face down</span>
+        </div>
+      </div>
+      <p class="caption" id="caption">기기 화면 위쪽 탭이나 오른쪽 FN 버튼으로 페이지를 바꿔요</p>
+    </section>
+
+    <aside class="panel">
+      <nav class="apps" aria-label="앱 선택">
+        <a href="index.html">Focus Cube</a>
+        <a href="lab.html" aria-current="page">Sensor Lab</a>
+      </nav>
+      <header>
+        <h1>Sensor Lab</h1>
+        <p class="sub">센서를 가상으로 움직이고, 펌웨어가 어떻게 반응하는지 확인해요</p>
+      </header>
+
+      <section class="sensor">
+        <h2>기울기 · 자세 <span class="chip-name">BMI270 accel</span></h2>
+        <p class="hint">Level 탭: 기포가 높은 쪽으로 가요. 1° 안쪽이면 초록색이 돼요.</p>
+        <label class="slider">앞뒤 (pitch) <input type="range" id="pitch" min="-80" max="80" value="0"><output id="pitch-v">0°</output></label>
+        <label class="slider">좌우 (roll) <input type="range" id="roll" min="-180" max="180" value="0"><output id="roll-v">0°</output></label>
+        <div class="btns">
+          <button class="btn" id="flat">평평하게</button>
+          <button class="btn" id="flip">엎기</button>
+          <button class="btn" id="shake">흔들기</button>
+        </div>
+      </section>
+
+      <section class="sensor">
+        <h2>회전 <span class="chip-name">BMI270 gyro</span></h2>
+        <p class="hint">Gyro 탭: 돌리는 속도가 Z 막대에 나오고, 바퀴 수가 쌓여요. 흔들면 SHAKE와 진동이 와요.</p>
+        <label class="slider">책상 위 회전 <input type="range" id="spin" min="-360" max="360" step="10" value="0"><output id="spin-v">0°/s</output></label>
+        <div class="btns"><button class="btn" id="stop">회전 멈춤</button></div>
+      </section>
+
+      <section class="sensor">
+        <h2>방위 · 자석 <span class="chip-name">2× BMM150</span></h2>
+        <p class="hint">Compass 탭: 기울여도 방위가 그대로예요. 자석을 가까이 대면 두 센서 값이 달라져 경고가 떠요.</p>
+        <label class="slider">향한 방향 <input type="range" id="heading" min="0" max="359" value="0"><output id="heading-v">0°</output></label>
+        <label class="slider">자석 거리 <input type="range" id="magnet" min="0" max="60" value="0"><output id="magnet-v">없음</output></label>
+      </section>
+
+      <section class="sensor">
+        <h2>소리 <span class="chip-name">mic + ES8311</span></h2>
+        <p class="hint">Sound 탭: 주변 소음이 dBFS로 나와요. 배경보다 갑자기 15dB 이상 커지면 박수로 인식해요.</p>
+        <label class="slider">주변 소음 <input type="range" id="noise" min="-80" max="-5" value="-45"><output id="noise-v">-45 dB</output></label>
+        <div class="btns"><button class="btn" id="clap">박수</button></div>
+      </section>
+
+      <section class="sensor">
+        <h2>배터리 <span class="chip-name">BQ27220</span></h2>
+        <p class="hint">Power 탭: 65mAh라서 화면을 켜두면 약 1시간 가요. 진동이나 소리를 쓰면 전류가 튀어요.</p>
+        <label class="slider">잔량 <input type="range" id="soc" min="0" max="100" value="82"><output id="soc-v">82%</output></label>
+        <label class="check inline"><input type="checkbox" id="charging"> USB 충전 중</label>
+        <div class="seg" id="speed" aria-label="시간 배속">
+          <button data-k="1" class="on">1×</button>
+          <button data-k="10">10×</button>
+          <button data-k="60">60×</button>
+        </div>
+      </section>
+
+      <section class="sensor">
+        <h2>터치 · 출력 · 버튼 <span class="chip-name">CST9220 / motor / FN</span></h2>
+        <p class="hint">I/O 탭: 패드를 누르거나 밀어보고, Vibrate·Beep을 눌러봐요. FN을 누르면 다음 탭으로 가요.</p>
+        <div class="btns">
+          <button class="btn hold" id="fn">FN 버튼 (누르고 있기)</button>
+          <label class="check inline"><input type="checkbox" id="sound" checked> 소리 켜기</label>
+        </div>
+      </section>
+
+      <section class="sensor">
+        <h2>펌웨어가 받는 값</h2>
+        <div class="raw-wrap">
+          <table class="raw" id="raw">
+            <tr><th>가속도 (g)</th><td id="r-acc">-</td></tr>
+            <tr><th>자이로 (°/s)</th><td id="r-gyro">-</td></tr>
+            <tr><th>지자기 A (µT)</th><td id="r-magA">-</td></tr>
+            <tr><th>지자기 B (µT)</th><td id="r-magB">-</td></tr>
+            <tr><th>마이크</th><td id="r-mic">-</td></tr>
+            <tr><th>배터리</th><td id="r-bat">-</td></tr>
+          </table>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="focuscube.js"></script>
+  <script src="common.js"></script>
+  <script src="lab.js"></script>
+</body>
+</html>

@@ -51,6 +51,28 @@ void hal_status_led(hal_led_t led);
 /* Turn the backlight off when face down: the battery is only 65 mAh. */
 void hal_display_set_awake(bool awake);
 
+/* Gyroscope (BMI270) in deg/s. */
+bool hal_gyro_read(float *gx, float *gy, float *gz);
+/* Magnetometers (2x BMM150), idx 0 or 1, in µT, body frame. */
+bool hal_mag_read(int idx, float *mx, float *my, float *mz);
+/* Microphone (via ES8311): RMS of the latest ~50 ms block, 0..1 FS. */
+float hal_mic_rms(void);
+
+typedef struct {
+    float soc_pct;    /* state of charge                       */
+    float voltage_mv;
+    float current_ma; /* > 0 discharging, < 0 charging         */
+    bool charging;
+} hal_battery_t;
+/* Fuel gauge (BQ27220). */
+bool hal_battery_read(hal_battery_t *out);
+#define HAL_BATTERY_CAPACITY_MAH 65.0f
+
+/* Vibration motor (GPIO8) for the given duration. */
+void hal_vibrate(uint32_t ms);
+/* Function / AI button (GPIO7), true while held. */
+bool hal_fn_button(void);
+
 /* Persist one finished session (flash / sync queue). */
 void hal_session_record(const fc_record_t *rec);
 bool hal_stats_load(app_stats_t *out);
